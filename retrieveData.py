@@ -112,7 +112,7 @@ class DataHandler:
             
             return combined_df
             
-    def get_returns(self, df: pd.DataFrame, column: Optional[Union[str, List[str]]] = None, log: bool = False) -> pd.DataFrame: 
+    def get_returns(self, df: pd.DataFrame, columns: Optional[Union[str, List[str]]] = None, log: bool = False) -> pd.DataFrame: 
         """
         Retrieves the normal or logarithmic returns of a DataFrame
 
@@ -123,22 +123,25 @@ class DataHandler:
         :return: DataFrame of returns
         """
         if df.empty or len(df) < 2:
-            raise ValueError("Input DataFrame is empty")
-        
-        if not np.issubdtype(df.dtypes.dtypes, np.number):
-            raise ValueError("DataFrame contains non-numeric data")
-        
+            raise ValueError("Input DataFrame is empty or has insufficient data points")
+    
+        # If columns is specified, select only those columns
         if columns is not None:
             if isinstance(columns, str):
                 columns = [columns]
             df = df[columns]
+        
+        # Check if all remaining columns are numeric
+        non_numeric_cols = df.select_dtypes(exclude=[np.number]).columns
+        if len(non_numeric_cols) > 0:
+            raise ValueError(f"DataFrame contains non-numeric data in columns: {list(non_numeric_cols)}")
 
         if log:
             returns_df = np.log(df / df.shift(1))
         else:   
-            returns_df = (df - df.shift(1)) / df.shift(1)
+            returns_df = df.pct_change()
         
-        return returns_df
+        return returns_df.set_index(df.index)
 
     
     
