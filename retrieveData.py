@@ -95,7 +95,10 @@ class DataHandler:
             results = list(executor.map(fetch_data, tickers))
 
         if len(tickers) == 1:
-            return results[0][1]
+            df = results[0][1]
+            if adj_close_only and df is not None:
+                return df[['adjClose']]
+            return df
         else:
             combined_df = pd.DataFrame(index=pd.date_range(start=start_date, end=end_date))
             for ticker, df in results:
